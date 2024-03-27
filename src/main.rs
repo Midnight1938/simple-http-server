@@ -1,22 +1,22 @@
-// Uncomment this block to pass the first stage
-use std::net::TcpListener;
+use http_server_starter_rust::status::HttpStatus;
+use std::{
+    io::{self, Read, Write},
+    net::TcpListener,
+};
 
-fn main() {
-    // You can use print statements as follows for debugging, they'll be visible when running tests.
-    println!("Logs from your program will appear here!");
-
-    // Uncomment this block to pass the first stage
-    
+fn main() -> Result<(), std::io::Error> {
     let listener = TcpListener::bind("127.0.0.1:4221").unwrap();
-    
     for stream in listener.incoming() {
         match stream {
-            Ok(_stream) => {
+            Ok(mut stream) => {
                 println!("accepted new connection");
+                stream.write_fmt(format_args!("{}\r\n", HttpStatus::Ok.into_status_line()))?;
+                stream.flush()?;
             }
             Err(e) => {
                 println!("error: {}", e);
             }
-        }
+        };
     }
+    Ok(())
 }
