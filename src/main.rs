@@ -19,7 +19,7 @@ fn connection_handler(mut stream: TcpStream) -> io::Result<()>{
         Some(&"GET") => {
             if let Some(path) = tokens.get(1){
                 match *path {
-                    "/" | "/index.html" => format!("{}\r\n", HttpStatus::Ok.into_status_line()),
+                    "/" => format!("{}\r\n", HttpStatus::Ok.into_status_line()),
                     content if content.starts_with("/echo") => {
                         let tkn = content.replacen("/echo/", "", 1);
                         format!("{}\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
