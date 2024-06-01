@@ -22,12 +22,12 @@ fn connection_handler(mut stream: TcpStream) -> io::Result<()>{
                     "/" => format!("{}\r\n", HttpStatus::Ok.into_status_line()),
                     content if content.starts_with("/echo") => {
                         let tkn = content.replacen("/echo/", "", 1);
-                        format!("{}\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
+                        format!("{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
                                 HttpStatus::Ok.into_status_line(), tkn.len(), tkn)
                     }
                     _ => format!("{}\r\n", HttpStatus::NotFound.into_status_line())
                 }
-            } 
+            }
             else { format!("{}\r\n", HttpStatus::NotFound.into_status_line()) }
         }
         Some(_) => {
@@ -40,6 +40,7 @@ fn connection_handler(mut stream: TcpStream) -> io::Result<()>{
         }
     };
 
+    println!("Response: {}", response);
     stream.write(response.as_bytes())?;
     stream.flush()?;
     Ok(())
