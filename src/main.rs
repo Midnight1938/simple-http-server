@@ -1,11 +1,11 @@
 use http_server_starter_rust::status::HttpStatus;
 use std::{
-    io::{self, BufRead, Read, Write},
-    net::{self, TcpListener, TcpStream},
+    io::{self, Read, Write},
+    net::{TcpListener, TcpStream},
     //sync::Arc,
+    fs::File,
+    path::Path,
     collections::HashMap, thread};
-use std::fs::File;
-use std::path::Path;
 
 
 fn parse_headers(request: &str) -> HashMap<String, String> {
