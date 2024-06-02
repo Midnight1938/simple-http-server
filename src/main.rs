@@ -20,16 +20,16 @@ fn parse_headers(request: &str) -> HashMap<String, String> {
     headers
 }
 
-fn serve_file(path: &str) -> io::Result<Vec<u8>> {
-    let file_path = Path::new(path);
-    let mut file = File::open(file_path)?;
+fn serve_file(path: &str, base_dir: &str) -> io::Result<Vec<u8>> {
+    let file_path = format!("{}/{}", base_dir, path);
+    let mut file = File::open(Path::new(&file_path))?;
 
     let mut buff = Vec::new();
     file.read_to_end(&mut buff)?;
     Ok(buff)
 }
 
-fn connection_handler(mut stream: TcpStream) -> io::Result<()> {
+fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
     let mut buffer = [0; 512];
     stream.read(&mut buffer)?;
 
@@ -63,7 +63,7 @@ fn connection_handler(mut stream: TcpStream) -> io::Result<()> {
                     }
                     content if content.starts_with("/files/") => {
                         let file_path = &content.replacen("/files/", "", 1); // Extract the file path from the URL
-                        match serve_file(file_path) {
+                        match serve_file(file_path, base_dir) {
                             Ok(buffer) => {
                                 response.extend_from_slice(
                                     format!("{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n",
