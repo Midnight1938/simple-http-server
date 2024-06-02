@@ -1,9 +1,23 @@
 use http_server_starter_rust::status::HttpStatus;
 use std::{
     //    fmt::{self, Display, Formatter},
-    io::{self, BufRead, BufReader, Read, Write},
+    io::{self, BufRead, Read, Write},
     net::{self, TcpListener, TcpStream},
+    collections::HashMap
 };
+
+
+fn parse_headers(request: &str) -> HashMap<String, String> {
+    let mut headers = HashMap::new();
+    for line in request.lines().skip(1) {
+        if let Some((key, value)) = line.split_once(": ") {
+            headers.insert(key.to_string(), value.to_string());
+        } else {
+            break;
+        }
+    }
+    headers
+}
 
 fn connection_handler(mut stream: TcpStream) -> io::Result<()>{
     let mut buffer = [0; 512];
@@ -13,6 +27,7 @@ fn connection_handler(mut stream: TcpStream) -> io::Result<()>{
     println!("Request: {}", request);
     let lines: Vec<&str> = request.split("\r\n").collect();
     let tokens: Vec<&str> = lines[0].split(" ").collect();
+    let headers = parse_headers(&request);
 
 
     let response = match tokens.get(0) {
@@ -25,8 +40,14 @@ fn connection_handler(mut stream: TcpStream) -> io::Result<()>{
                         format!("{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
                                 HttpStatus::Ok.into_status_line(), tkn.len(), tkn)
                     }
+                    "/user-agent" => {
+                        let user_agent = headers.get("User-Agent").unwrap();
+                        format!("{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
+                                HttpStatus::Ok.into_status_line(), user_agent.len(), user_agent)
+                    },
                     _ => format!("{}\r\n", HttpStatus::NotFound.into_status_line())
                 }
+                
             }
             else { format!("{}\r\n", HttpStatus::NotFound.into_status_line()) }
         }
