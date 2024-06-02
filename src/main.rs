@@ -67,7 +67,7 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                         match serve_file(base_dir, file_path) {
                             Ok(buffer) => {
                                 response.extend_from_slice(
-                                    format!("{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n",
+                                    format!("{}Content-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
                                             HttpStatus::Ok.into_status_line(), buffer.len())
                                         .as_bytes());
                                 response.extend_from_slice(&buffer)
