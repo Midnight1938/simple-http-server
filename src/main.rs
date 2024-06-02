@@ -2,7 +2,7 @@ use http_server_starter_rust::status::HttpStatus;
 use std::{
     io::{self, Read, Write},
     net::{TcpListener, TcpStream},
-    //sync::Arc,
+    env,
     fs::File,
     path::Path,
     collections::HashMap, thread};
@@ -20,8 +20,9 @@ fn parse_headers(request: &str) -> HashMap<String, String> {
     headers
 }
 
-fn serve_file(path: &str, base_dir: &str) -> io::Result<Vec<u8>> {
-    let file_path = format!("{}/{}", base_dir, path);
+fn serve_file(base_dir: &str, path: &str) -> io::Result<Vec<u8>> {
+    let file_path = format!("{}{}", base_dir, path);
+    println!("Attempting to open file: {:?}", &file_path);
     let mut file = File::open(Path::new(&file_path))?;
 
     let mut buff = Vec::new();
@@ -54,16 +55,16 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                                     HttpStatus::Ok.into_status_line(), user_agent.len(), user_agent)
                                 .as_bytes());
                     }
-                    content if content.starts_with("/echo") => {
-                        let data = content.replacen("/echo/", "", 1);
+                    content if content.starts_with("/echo/") => {
+                        let data = &content[6..];
                         response.extend_from_slice(
                             format!("{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
                                     HttpStatus::Ok.into_status_line(), data.len(), data)
                                 .as_bytes());
                     }
-                    content if content.starts_with("/files/") => {
-                        let file_path = &content.replacen("/files/", "", 1); // Extract the file path from the URL
-                        match serve_file(file_path, base_dir) {
+                    datum if datum.starts_with("/files/") => {
+                        let file_path = &datum[6..];
+                        match serve_file(base_dir, file_path) {
                             Ok(buffer) => {
                                 response.extend_from_slice(
                                     format!("{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n",
@@ -84,7 +85,7 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
         }
         None => {
             println!("No method specified");
-            response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes())
+            response.extend_from_slice(format!("{}\r\n", HttpStatus::ImATeapot.into_status_line()).as_bytes())
         }
     };
 
@@ -94,17 +95,27 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
     Ok(())
 }
 
+fn parse_args() -> String {
+    let args: Vec<String> = env::args().collect();
+    if let Some(index) = args.iter().position(|arg| arg == "--directory") {
+        if let Some(dir) = args.get(index + 1) {
+            return dir.clone();
+        }
+    }
+    "files".to_string() // Default directory
+}
 fn main() -> Result<(), std::io::Error> {
     let listener = TcpListener::bind("127.0.0.1:4221").unwrap();
     //let listener = Arc::new(listener);
-
+    let base_directory = parse_args();
     for stream in listener.incoming() {
         //let listener = Arc::clone(&listener);
         match stream {
             Ok(_stream) => {
+                let base_dir = base_directory.clone();
                 eprintln!("accepted new connection");
                 thread::spawn(move || {
-                    if let Err(e) = connection_handler(_stream) {
+                    if let Err(e) = connection_handler(_stream, &base_dir) {
                         eprintln!("Error Handling Connection: {}", e)
                     }
                 });
