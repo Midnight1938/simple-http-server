@@ -41,7 +41,8 @@ fn connection_handler(mut stream: TcpStream) -> io::Result<()>{
                                 HttpStatus::Ok.into_status_line(), tkn.len(), tkn)
                     }
                     "/user-agent" => {
-                        let user_agent = headers.get("User-Agent").unwrap();
+                        let default_user_agent = " ".to_string();
+                        let user_agent = headers.get("User-Agent").unwrap_or(&default_user_agent);
                         format!("{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}",
                                 HttpStatus::Ok.into_status_line(), user_agent.len(), user_agent)
                     },
