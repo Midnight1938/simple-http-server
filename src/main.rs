@@ -46,7 +46,7 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
         Some(&"GET") => {
             if let Some(path) = tokens.get(1) {
                 match *path {
-                    "/" => response.extend_from_slice(HttpStatus::Ok.into_status_line().as_bytes()),
+                    "/" => response.extend_from_slice(format!("{}\r\n", HttpStatus::Ok.into_status_line()).as_bytes()),
                     "/user-agent" => {
                         let alt_user_agent = "Unknown".to_string();
                         let user_agent = headers.get("User-Agent").unwrap_or(&alt_user_agent);
