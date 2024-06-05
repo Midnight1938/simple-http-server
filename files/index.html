@@ -4,9 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to My Website</title>
+    <style>
+        body {
+            background-color: #24273a;
+            color: #cad3f5;
+        }
+        .marquee {
+            background-color: #181926;
+            padding: 10px;
+            overflow: hidden;
+        }
+    </style>
 </head>
 <body>
+    <div class="marquee">
+        <marquee direction="left" behavior="scroll" scrollamount="8">
+            Hello room303
+        </marquee>
+    </div>
     <h1>Welcome to My Website</h1>
     <p>This is a basic HTML file served by the Rust HTTP server.</p>
+    <p>It is served from the <code>public/</code> directory.</p>
+    <h2>Car Problems Story</h2>
+    <p>Checkout this cool car story from the early 2010s</p>
+    <!-- Link to open carproblems.txt -->
+    <a href="carproblems.txt" target="_blank">Open Car Problems Story</a>
 </body>
 </html>
