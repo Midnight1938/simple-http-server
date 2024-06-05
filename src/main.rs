@@ -127,6 +127,23 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                             Err(_) => response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes()),
                         }
                     }
+                    pusher if pusher.starts_with("/files/") => {
+                        let file_path = &pusher[6..];
+                        match serve_file(base_dir, file_path, 'r', None) {
+                            Ok(buffer) => {
+                                response.extend_from_slice(
+                                    format!(
+                                        "{}Content-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
+                                        HttpStatus::Ok.into_status_line(),
+                                        buffer.len()
+                                    )
+                                        .as_bytes(),
+                                );
+                                response.extend_from_slice(&buffer)
+                            }
+                            Err(_) => response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes()),
+                        }
+                    }
                     _ => response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes()),
                 }
             } else {
