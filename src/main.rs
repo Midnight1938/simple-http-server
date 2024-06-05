@@ -23,21 +23,26 @@ fn parse_headers(request: &str) -> HashMap<String, String> {
 }
 
 fn serve_file(base_dir: &str, path: &str, protocol: char, data: Option<&[u8]>) -> io::Result<Vec<u8>> {
-    let file_path = format!("{}/{}", base_dir, path);
+    let mut file_path = base_dir.to_string();
+    // Remove trailing slashes from base_dir and leading slashes from path
+    file_path = file_path.trim_end_matches('/').to_string();
+    let path = path.trim_start_matches('/');
+    file_path.push('/');
+    file_path.push_str(path);
     println!("Attempting to open file: {:?}", &file_path);
 
+    let mut buff = Vec::new();
     match protocol {
         'r' => {
             let mut file = File::open(Path::new(&file_path))?;
-            let mut buff = Vec::new();
             file.read_to_end(&mut buff)?;
             Ok(buff)
         }
         'w' => {
             if let Some(data) = data {
-                let mut file = File::create(Path::new(&file_path))?;
-                file.write_all(data)?;
-                println!("Writing to {}", file_path);
+                let mut file = File::create(&file_path)?;
+                file.write_all(&data.iter().take_while(|&&c| c != 0).copied().collect::<Vec<u8>>())?;
+                println!("Writing to {}", &file_path);
                 Ok(Vec::new())
             } else {
                 Err(io::Error::new(io::ErrorKind::InvalidInput, "No data provided for writing"))
@@ -46,6 +51,7 @@ fn serve_file(base_dir: &str, path: &str, protocol: char, data: Option<&[u8]>) -
         _ => Err(io::Error::new(io::ErrorKind::InvalidInput, "Unsupported protocol")),
     }
 }
+
 
 fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
     let mut buffer = [0; 512];
