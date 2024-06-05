@@ -178,7 +178,7 @@ fn parse_args() -> String {
             return dir.clone();
         }
     }
-    "files".to_string() // Default directory
+    "./files".to_string() // Default directory
 }
 
 fn main() -> Result<(), std::io::Error> {
