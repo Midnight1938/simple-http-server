@@ -1,4 +1,3 @@
-use http_server_starter_rust::status::HttpStatus;
 use std::{
     collections::HashMap,
     env,
@@ -8,6 +7,8 @@ use std::{
     path::Path,
     thread,
 };
+
+use http_server_starter_rust::status::HttpStatus;
 
 fn parse_headers(request: &str) -> HashMap<String, String> {
     let mut headers = HashMap::new();
@@ -22,7 +23,7 @@ fn parse_headers(request: &str) -> HashMap<String, String> {
 }
 
 fn serve_file(base_dir: &str, path: &str, protocol: char, data: Option<&[u8]>) -> io::Result<Vec<u8>> {
-    let file_path = format!("{}{}", base_dir, path);
+    let file_path = format!("{}/{}", base_dir, path);
     println!("Attempting to open file: {:?}", &file_path);
 
     match protocol {
@@ -47,8 +48,8 @@ fn serve_file(base_dir: &str, path: &str, protocol: char, data: Option<&[u8]>) -
 }
 
 fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
-    let mut buffer = Vec::new();
-    stream.read_to_end(&mut buffer)?;
+    let mut buffer = [0; 512];
+    stream.read(&mut buffer)?;
 
     let request = String::from_utf8_lossy(&buffer[..]);
     println!("Request: {}", request);
