@@ -82,6 +82,23 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                                 .as_bytes(),
                         );
                     }
+                    "/index" => {
+                        let file_path = &datum[6..];
+                        match serve_file(base_dir, "index.html", 'r', None) {
+                            Ok(buffer) => {
+                                response.extend_from_slice(
+                                    format!(
+                                        "{}Content-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
+                                        HttpStatus::Ok.into_status_line(),
+                                        buffer.len()
+                                    )
+                                        .as_bytes(),
+                                );
+                                response.extend_from_slice(&buffer)
+                            }
+                            Err(_) => response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes()),
+                        }
+                    }
                     content if content.starts_with("/echo/") => {
                         let data = &content[6..];
                         response.extend_from_slice(
