@@ -169,7 +169,7 @@ fn parse_args() -> String {
 }
 
 fn main() -> Result<(), std::io::Error> {
-    let listener = TcpListener::bind("0.0.0.0:80").unwrap();
+    let listener = TcpListener::bind("0.0.0.0:4000").unwrap();
     let base_directory = parse_args();
     for stream in listener.incoming() {
         match stream {
