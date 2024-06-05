@@ -37,7 +37,11 @@ fn serve_file(base_dir: &str, path: &str, protocol: char, data: Option<&[u8]>) -
                 file.write_all(data)?;
                 println!("Writing to {}", file_path);
                 Ok(Vec::new())
+        }else {
+                Err(io::Error::new(io::ErrorKind::InvalidInput, "No data provided for writing"))
+            }
         }
+        _ => Err(io::Error::new(io::ErrorKind::InvalidInput, "Unsupported protocol")),
     }
 }
 
