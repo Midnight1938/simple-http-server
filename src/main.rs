@@ -159,16 +159,13 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
             }
         }
         Some(_) => {
-            println!("Unknown method: {}", tokens[0]);
             response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes())
         }
         None => {
-            println!("No method specified");
             response.extend_from_slice(format!("{}\r\n", HttpStatus::ImATeapot.into_status_line()).as_bytes())
         }
     };
 
-    println!("Response: {:?}", response);
     stream.write_all(&response)?;
     stream.flush()?;
     Ok(())
