@@ -83,7 +83,6 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                         );
                     }
                     "/index" => {
-                        let file_path = &datum[6..];
                         match serve_file(base_dir, "index.html", 'r', None) {
                             Ok(buffer) => {
                                 response.extend_from_slice(
