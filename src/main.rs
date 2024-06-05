@@ -87,7 +87,7 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                             Ok(buffer) => {
                                 response.extend_from_slice(
                                     format!(
-                                        "{}Content-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
+                                        "{}Content-Type: text/html\r\nContent-Length: {}\r\n\r\n",
                                         HttpStatus::Ok.into_status_line(),
                                         buffer.len()
                                     )
@@ -110,13 +110,13 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                                 .as_bytes(),
                         );
                     }
-                    datum if datum.starts_with("/files/") => {
+                    datum if datum.starts_with("/index/") => {
                         let file_path = &datum[6..];
                         match serve_file(base_dir, file_path, 'r', None) {
                             Ok(buffer) => {
                                 response.extend_from_slice(
                                     format!(
-                                        "{}Content-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
+                                        "{}Content-Type: text/plain\r\nContent-Length: {}\r\n\r\n",
                                         HttpStatus::Ok.into_status_line(),
                                         buffer.len()
                                     )
