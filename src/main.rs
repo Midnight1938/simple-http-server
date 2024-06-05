@@ -143,7 +143,7 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                             Ok(_) => {
                                 response.extend_from_slice(
                                     format!(
-                                        "{}Content-Type: text/plain\r\nContent-Length: 0\r\n\r\n",
+                                        "{}Content-Type: application/octet-stream\r\nContent-Length: 0\r\n\r\n",
                                         HttpStatus::Created.into_status_line()
                                     )
                                         .as_bytes(),
