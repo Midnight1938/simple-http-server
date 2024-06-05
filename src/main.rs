@@ -23,7 +23,7 @@ fn parse_headers(request: &str) -> HashMap<String, String> {
 }
 
 fn serve_file(base_dir: &str, path: &str, protocol: char, data: Option<&[u8]>) -> io::Result<Vec<u8>> {
-    let file_path = format!("{}{}", base_dir, path);
+    let file_path = format!("{}/{}", base_dir, path);
     println!("Attempting to open file: {:?}", &file_path);
 
     match protocol {
