@@ -20,14 +20,25 @@ fn parse_headers(request: &str) -> HashMap<String, String> {
     headers
 }
 
-fn serve_file(base_dir: &str, path: &str) -> io::Result<Vec<u8>> {
+fn serve_file(base_dir: &str, path: &str, protocol: char, data: Option<&[u8]>) -> io::Result<Vec<u8>> {
     let file_path = format!("{}{}", base_dir, path);
     println!("Attempting to open file: {:?}", &file_path);
     let mut file = File::open(Path::new(&file_path))?;
 
     let mut buff = Vec::new();
-    file.read_to_end(&mut buff)?;
-    Ok(buff)
+    match protocol{
+        'r' => {
+            file.read_to_end(&mut buff)?;
+            Ok(buff)
+        }
+        'w' => {
+            if let Some(data) = data {
+                let mut file = File::create(path)?;
+                file.write_all(data)?;
+                println!("Writing to {}", file_path);
+                Ok(Vec::new())
+        }
+    }
 }
 
 fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
@@ -64,7 +75,7 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                     }
                     datum if datum.starts_with("/files/") => {
                         let file_path = &datum[6..];
-                        match serve_file(base_dir, file_path) {
+                        match serve_file(base_dir, file_path, 'r', None) {
                             Ok(buffer) => {
                                 response.extend_from_slice(
                                     format!("{}Content-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
@@ -73,6 +84,27 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                                 response.extend_from_slice(&buffer)
                             }
                             Err(_) => response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes())
+                        }
+                    }
+                    _ => response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes())
+                }
+            } else { response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes()) }
+        }
+        Some(&"POST"){
+            if let Some(path) = tokens.get(1){
+                match *path{
+                    datum if datum.starts_with("/files/") => {
+                        let file_path = &datum[6..];
+                        let data = request.split("\r\n\r\n").nth(1).map(|d| d.as_bytes());
+                        match serve_file(base_dir, file_path, 'w', data) {
+                            Ok(buffer) => {
+                                response.extend_from_slice(
+                                    format!("{}Content-Type: application/octet-stream\r\nContent-Length: {}\r\n\r\n",
+                                            HttpStatus::Created.into_status_line(), buffer.len())
+                                        .as_bytes());
+                                response.extend_from_slice(&buffer)
+                            }
+                            Err(_) => response.extend_from_slice(format!("{}\r\n", HttpStatus::NotModified.into_status_line()).as_bytes())
                         }
                     }
                     _ => response.extend_from_slice(format!("{}\r\n", HttpStatus::NotFound.into_status_line()).as_bytes())
