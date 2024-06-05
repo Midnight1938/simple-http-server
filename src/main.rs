@@ -48,8 +48,8 @@ fn serve_file(base_dir: &str, path: &str, protocol: char, data: Option<&[u8]>) -
 }
 
 fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
-    let mut buffer = [0; 512];
-    stream.read(&mut buffer)?;
+    let mut buffer = Vec::new();
+    stream.read_to_end(&mut buffer)?;
 
     let request = String::from_utf8_lossy(&buffer[..]);
     println!("Request: {}", request);
@@ -116,8 +116,10 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
                 match *path {
                     datum if datum.starts_with("/files/") => {
                         let file_path = &datum[6..];
-                        let data = request.split("\r\n\r\n").nth(1).map(|d| d.as_bytes());
-                        match serve_file(base_dir, file_path, 'w', data) {
+                        let content_length = headers.get("Content-Length").and_then(|len| len.parse::<usize>().ok()).unwrap_or(0);
+                        let body_start = request.find("\r\n\r\n").map(|pos| pos + 4).unwrap_or(0);
+                        let data = &buffer[body_start..body_start + content_length];
+                        match serve_file(base_dir, file_path, 'w', Some(data)) {
                             Ok(_) => {
                                 response.extend_from_slice(
                                     format!(
@@ -151,6 +153,7 @@ fn connection_handler(mut stream: TcpStream, base_dir: &str) -> io::Result<()> {
     stream.flush()?;
     Ok(())
 }
+
 
 fn parse_args() -> String {
     let args: Vec<String> = env::args().collect();
